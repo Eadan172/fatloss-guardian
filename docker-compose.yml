@@ -1,0 +1,7 @@
+services:
+  fatloss-guardian:
+    build: .
+    container_name: fatloss-guardian
+    ports:
+      - "8080:80"
+    restart: unless-stopped
