@@ -30,12 +30,13 @@ export function scheduleServerBackup(state) {
 
 async function post(state) {
   try {
+    // PUT：dev 中间件与 docker（nginx WebDAV）同时支持
     await fetch('/api/backup', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ app: 'fatloss-guardian', exportedAt: new Date().toISOString(), data: state }),
     })
   } catch {
-    /* 静默：纯静态部署（如未挂载备份的 docker）下无此端点 */
+    /* 静默：无此端点的静态部署下忽略 */
   }
 }

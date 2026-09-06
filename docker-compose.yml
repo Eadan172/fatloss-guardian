@@ -5,6 +5,6 @@ services:
     ports:
       - "8080:80"
     volumes:
-      # 本机备份文件只读挂载：dev 模式自动写入，docker 启动即读到同一份最新数据
-      - ./data:/usr/share/nginx/html/data:ro
+      # 本机备份文件挂载（可读写）：任何模式下数据变化都会写入 data/backup.json，启动自动恢复
+      - ./data:/usr/share/nginx/html/data
     restart: unless-stopped

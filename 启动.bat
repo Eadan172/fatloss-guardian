@@ -9,6 +9,9 @@ echo   减重守护台 FatLoss Guardian 正在启动...
 echo ============================================
 echo.
 
+REM 确保数据目录存在（容器将挂载它读写备份文件）
+if not exist data mkdir data
+
 docker info >nul 2>&1
 if not errorlevel 1 goto docker_ready
 

@@ -24,7 +24,7 @@ function localBackupPlugin() {
       })
       return
     }
-    if (req.method === 'POST') {
+    if (req.method === 'PUT' || req.method === 'POST') {
       let body = ''
       req.on('data', (c) => (body += c))
       req.on('end', () => {

@@ -26,10 +26,11 @@ export default function App() {
   const [toast, setToast] = React.useState('')
   const today = todayStr()
 
-  // 任何状态变化即时持久化到本机（localStorage + 本机备份文件，后者静态部署下静默跳过）
+  // 任何状态变化即时持久化到本机（localStorage + 本机备份文件）
+  // 仅建档后才写备份文件：避免空状态覆盖已有备份（清空数据走 handleReset 显式清除）
   React.useEffect(() => {
     saveState(state)
-    scheduleServerBackup(state)
+    if (state.profile) scheduleServerBackup(state)
   }, [state])
 
   // 首次打开且本机无档案时，尝试从本机备份文件（data/backup.json）自动恢复
