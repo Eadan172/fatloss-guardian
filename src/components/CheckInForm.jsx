@@ -1,6 +1,7 @@
 import React from 'react'
 import { todayStr, weekdayCN } from '../lib/date'
 import { EMPTY_CHECKIN } from '../lib/storage'
+import { AppBadge } from './CourseLibrary'
 
 const NUM_FIELDS = [
   ['weight', '体重', 'kg', 0.1],
@@ -13,7 +14,7 @@ const NUM_FIELDS = [
   ['workoutMinutes', '运动时长', '分钟', 5],
 ]
 
-export default function CheckInForm({ checkins, plan, onSave }) {
+export default function CheckInForm({ checkins, plan, courses = [], onSave }) {
   const [date, setDate] = React.useState(todayStr())
   const existing = checkins[date]
   const [form, setForm] = React.useState({ ...EMPTY_CHECKIN, ...(existing || {}) })
@@ -25,6 +26,25 @@ export default function CheckInForm({ checkins, plan, onSave }) {
   }, [date, checkins])
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  // 当日安排的课程（来自计划页课程库，按星期匹配）
+  const dayCourses = courses.filter((c) => Number(c.weekday) === new Date(`${date}T00:00:00`).getDay())
+
+  // 勾选课程：自动回填运动时长（已勾课程时长之和），全勾自动标记训练完成
+  const toggleCourse = (id) => {
+    setForm((f) => {
+      const cur = Array.isArray(f.completedCourses) ? f.completedCourses : []
+      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
+      const minutes = dayCourses.filter((c) => next.includes(c.id)).reduce((s, c) => s + (Number(c.minutes) || 0), 0)
+      return {
+        ...f,
+        completedCourses: next,
+        workoutMinutes: next.length > 0 ? minutes : '',
+        workoutDone: next.length > 0 && next.length === dayCourses.length,
+      }
+    })
+  }
+
   const submit = () => {
     onSave(date, form)
     setSaved(true)
@@ -71,6 +91,39 @@ export default function CheckInForm({ checkins, plan, onSave }) {
           </div>
         ))}
       </div>
+
+      {dayCourses.length > 0 && (
+        <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-bold text-indigo-800">今日训练课程 · {dayCourses.length} 节</span>
+            <span className="text-[11px] text-indigo-400">勾选自动回填运动时长，全部完成自动标记训练</span>
+          </div>
+          <ul className="mt-2.5 space-y-2">
+            {dayCourses.map((c) => {
+              const checked = (form.completedCourses || []).includes(c.id)
+              return (
+                <li key={c.id} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${checked ? 'bg-emerald-50' : 'bg-white'}`}>
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded accent-emerald-600"
+                    checked={checked}
+                    onChange={() => toggleCourse(c.id)}
+                  />
+                  {c.link ? (
+                    <a href={c.link} target="_blank" rel="noreferrer" className={`text-sm font-semibold hover:underline ${checked ? 'text-emerald-700 line-through' : 'text-indigo-600'}`}>
+                      {c.name} ↗
+                    </a>
+                  ) : (
+                    <span className={`text-sm font-semibold ${checked ? 'text-emerald-700 line-through' : 'text-slate-700'}`}>{c.name}</span>
+                  )}
+                  <AppBadge app={c.app} />
+                  <span className="ml-auto text-xs text-slate-400">{c.minutes} 分钟</span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">

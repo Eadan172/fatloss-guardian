@@ -44,23 +44,29 @@ fatloss-guardian/
 ├─ vite.config.js / tailwind.config.js / postcss.config.js
 ├─ Dockerfile / docker-compose.yml / nginx.conf
 └─ src/
-   ├─ main.jsx / App.jsx            # 应用骨架、Tab 路由、状态持久化
-   ├─ index.css                     # Tailwind + 组件类
+   ├─ main.jsx / App.jsx         # 应用骨架、Tab 路由、状态持久化 + 启动自动恢复
+   ├─ index.css                  # Tailwind + 组件类
    ├─ lib/
-   │  ├─ storage.js                 # localStorage 数据层 + JSON 导出/导入校验
-   │  ├─ plan.js                    # 热量/营养素/训练/饮食计划生成引擎
-   │  ├─ review.js                  # 周/月复盘规则引擎 + 防反弹状态判定
-   │  └─ date.js                    # 日期工具
+   │  ├─ storage.js              # localStorage 数据层 + JSON 导出/导入校验
+   │  ├─ autobackup.js           # 本机文件自动备份（/api/backup，防抖写入）
+   │  ├─ plan.js                 # 热量/营养素/训练/饮食计划生成引擎
+   │  ├─ review.js               # 周/月复盘规则引擎 + 防反弹状态判定
+   │  └─ date.js                 # 日期工具
    └─ components/
-      ├─ Onboarding.jsx             # 首次建档引导
-      ├─ Dashboard.jsx              # 仪表盘（预警横幅 + 走势图 + 今日进度）
-      ├─ WeightChart.jsx            # 纯 SVG 防反弹预警图表
-      ├─ CheckInForm.jsx            # 每日打卡
-      ├─ PlanView.jsx               # 计划展示
-      ├─ ReviewView.jsx             # 周期复盘
-      ├─ SettingsView.jsx           # 区间设置 + 备份/恢复 + 清空
+      ├─ Onboarding.jsx          # 首次建档引导
+      ├─ Dashboard.jsx           # 仪表盘（预警横幅 + 走势图 + 今日进度）
+      ├─ WeightChart.jsx         # 纯 SVG 防反弹预警图表
+      ├─ CheckInForm.jsx         # 每日打卡（含当日课程清单联动）
+      ├─ PlanView.jsx            # 计划展示
+      ├─ CourseLibrary.jsx       # 运动课程库（Keep/薄荷课程录入与星期安排）
+      ├─ ReviewView.jsx          # 周期复盘
+      ├─ SettingsView.jsx        # 区间设置 + 备份/恢复 + 清空
       └─ StatCard.jsx
+启动.bat / 停止.bat / start.sh    # 一键启动/停止 Docker 平台
+data/backup.json                  # 本机自动备份（gitignore，运行时生成）
 ```
+
+> `data/` 目录为本机自动备份数据（个人健康数据），已在 .gitignore 中排除，请勿提交。
 
 ## 四、一键启动
 
@@ -86,7 +92,11 @@ docker compose up -d --build
 # 打开 http://localhost:8080
 ```
 
-> 数据保存在浏览器 localStorage 中，与访问端口/域名绑定。Docker 部署时若更换端口或域名，请在旧地址导出 JSON、在新地址导入恢复。
+### 方式 D：双击一键启动（推荐 Windows 日常使用）
+
+双击 `启动.bat` —— 自动拉起 Docker Desktop（如未运行）、构建启动容器、打开浏览器；双击 `停止.bat` 关闭。macOS / Linux 用 `./start.sh`。
+
+> **数据不再与端口/域名绑定**：dev/preview 模式下数据变化自动写入 `data/backup.json`；docker 模式只读挂载同一文件。任何启动方式打开时若浏览器无数据，会自动从该文件恢复。浏览器数据与文件备份双保险，跨设备迁移仍可用「设置 → 导出 JSON」。
 
 ## 五、隐私说明
 

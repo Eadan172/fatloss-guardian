@@ -2,6 +2,7 @@ import React from 'react'
 import {
   initialState, loadState, saveState, clearState, exportJSON, validateImport,
 } from './lib/storage'
+import { restoreFromServerBackup, scheduleServerBackup, writeServerBackup } from './lib/autobackup'
 import { generatePlan } from './lib/plan'
 import { todayStr } from './lib/date'
 import Onboarding from './components/Onboarding'
@@ -25,10 +26,26 @@ export default function App() {
   const [toast, setToast] = React.useState('')
   const today = todayStr()
 
-  // 任何状态变化即时持久化到本机
+  // 任何状态变化即时持久化到本机（localStorage + 本机备份文件，后者静态部署下静默跳过）
   React.useEffect(() => {
     saveState(state)
+    scheduleServerBackup(state)
   }, [state])
+
+  // 首次打开且本机无档案时，尝试从本机备份文件（data/backup.json）自动恢复
+  const restoreTried = React.useRef(false)
+  React.useEffect(() => {
+    if (restoreTried.current) return
+    restoreTried.current = true
+    if (state.profile) return
+    restoreFromServerBackup().then((r) => {
+      if (r?.profile) {
+        setState(r)
+        notify('✓ 已从本机备份文件自动恢复数据')
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const notify = (m) => {
     setToast(m)
@@ -68,7 +85,9 @@ export default function App() {
 
   const handleReset = () => {
     clearState()
-    setState(initialState())
+    const empty = initialState()
+    writeServerBackup(empty) // 立即覆盖本机备份文件，避免下次打开被自动恢复
+    setState(empty)
     setTab('dashboard')
     notify('已清空，可重新建档')
   }
@@ -109,10 +128,12 @@ export default function App() {
               <PlanView
                 plan={state.plan}
                 profile={state.profile}
+                courses={state.courses}
+                onUpdateCourses={(courses) => setState((s) => ({ ...s, courses }))}
                 onRegenerate={() => handleOnboard(state.profile)}
               />
             )}
-            {tab === 'checkin' && <CheckInForm checkins={state.checkins} plan={state.plan} onSave={handleCheckin} />}
+            {tab === 'checkin' && <CheckInForm checkins={state.checkins} plan={state.plan} courses={state.courses} onSave={handleCheckin} />}
             {tab === 'review' && <ReviewView checkins={state.checkins} plan={state.plan} settings={state.settings} today={today} />}
             {tab === 'settings' && (
               <SettingsView

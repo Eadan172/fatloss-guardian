@@ -4,4 +4,7 @@ services:
     container_name: fatloss-guardian
     ports:
       - "8080:80"
+    volumes:
+      # 本机备份文件只读挂载：dev 模式自动写入，docker 启动即读到同一份最新数据
+      - ./data:/usr/share/nginx/html/data:ro
     restart: unless-stopped

@@ -1,7 +1,7 @@
 // 本地存储层：单一 localStorage key，零网络传输。
 // 导出/导入为完整 JSON 快照，支持跨设备无损迁移。
 const KEY = 'fatloss.guardian.v1'
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export const EMPTY_CHECKIN = {
   weight: '',
@@ -15,6 +15,7 @@ export const EMPTY_CHECKIN = {
   workoutMinutes: '',
   stress: 3,
   note: '',
+  completedCourses: [], // 当日已完成的课程库课程 id
 }
 
 export function initialState() {
@@ -23,7 +24,8 @@ export function initialState() {
     createdAt: new Date().toISOString(),
     profile: null, // { name, gender, age, heightCm, startWeight, targetWeight, activity, equipment, diet }
     plan: null,    // 由 lib/plan.js 生成
-    checkins: {},  // { 'YYYY-MM-DD': {weight, calories, protein, carbs, fat, water, sleepHours, workoutDone, workoutMinutes, stress, note} }
+    checkins: {},  // { 'YYYY-MM-DD': {weight, calories, ..., note, completedCourses} }
+    courses: [],   // 运动课程库：[{ id, name, app: 'keep'|'boohee'|'other', minutes, weekday: 0-6, link }]
     settings: {
       safeZoneLow: 0,   // 安全体重区间下限 kg
       safeZoneHigh: 0,  // 安全体重区间上限 kg
@@ -60,6 +62,7 @@ function migrate(s) {
     ...s,
     settings: { ...base.settings, ...(s.settings || {}) },
     checkins: s.checkins || {},
+    courses: Array.isArray(s.courses) ? s.courses : [],
   }
 }
 
@@ -88,5 +91,6 @@ export function validateImport(text) {
   if (!data || typeof data !== 'object') return { ok: false, error: '文件结构不正确' }
   if (data.checkins && typeof data.checkins !== 'object') return { ok: false, error: 'checkins 字段格式错误' }
   if (data.profile && typeof data.profile !== 'object') return { ok: false, error: 'profile 字段格式错误' }
+  if (data.courses && !Array.isArray(data.courses)) return { ok: false, error: 'courses 字段格式错误' }
   return { ok: true, state: migrate(data) }
 }

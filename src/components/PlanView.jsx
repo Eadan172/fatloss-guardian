@@ -1,7 +1,8 @@
 import React from 'react'
 import StatCard from './StatCard'
+import CourseLibrary from './CourseLibrary'
 
-export default function PlanView({ plan, profile, onRegenerate }) {
+export default function PlanView({ plan, profile, courses = [], onUpdateCourses, onRegenerate }) {
   if (!plan) return null
   return (
     <div className="space-y-5">
@@ -47,6 +48,8 @@ export default function PlanView({ plan, profile, onRegenerate }) {
           ))}
         </div>
       </div>
+
+      <CourseLibrary courses={courses} onChange={onUpdateCourses} />
 
       <div className="card">
         <h3 className="text-lg font-extrabold tracking-tight">饮食执行要点</h3>
