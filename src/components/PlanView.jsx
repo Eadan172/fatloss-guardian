@@ -1,8 +1,15 @@
 import React from 'react'
 import StatCard from './StatCard'
 import CourseLibrary from './CourseLibrary'
+import LinkedMove from './LinkedMove'
+
+const PLAN_MODES = [
+  ['platform', '平台生成方案'],
+  ['app', '运动软件跟课'],
+]
 
 export default function PlanView({ plan, profile, courses = [], onUpdateCourses, onRegenerate }) {
+  const [mode, setMode] = React.useState('platform')
   if (!plan) return null
   return (
     <div className="space-y-5">
@@ -28,25 +35,46 @@ export default function PlanView({ plan, profile, courses = [], onUpdateCourses,
       </div>
 
       <div className="card">
-        <h3 className="text-lg font-extrabold tracking-tight">{plan.workout.title}</h3>
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-          {plan.workout.days.map((d) => (
-            <div key={d.day} className="rounded-xl border border-slate-200 p-3.5">
-              <div className="flex items-center gap-2">
-                <span className="chip bg-indigo-100 text-indigo-700">{d.day}</span>
-                <span className="text-sm font-bold">{d.focus}</span>
-              </div>
-              <ul className="mt-2 space-y-1 text-[13px] text-slate-600">
-                {d.moves.map((m) => (
-                  <li key={m} className="flex gap-1.5">
-                    <span className="text-slate-300">•</span>
-                    {m}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight">锻炼方案</h3>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {mode === 'platform' ? `${plan.workout.title} · 专业名词可点击查看动作介绍` : '跟随 Keep / 薄荷健康等 App 的课程训练，在下方课程库按上课日期录入'}
+            </p>
+          </div>
+          <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
+            {PLAN_MODES.map(([v, l]) => (
+              <button key={v} className={`tab-btn ${mode === v ? 'tab-btn-active' : ''}`} onClick={() => setMode(v)}>
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {mode === 'platform' ? (
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {plan.workout.days.map((d) => (
+              <div key={d.day} className="rounded-xl border border-slate-200 p-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="chip bg-indigo-100 text-indigo-700">{d.day}</span>
+                  <span className="text-sm font-bold">{d.focus}</span>
+                </div>
+                <ul className="mt-2 space-y-1 text-[13px] text-slate-600">
+                  {d.moves.map((m) => (
+                    <li key={m} className="flex gap-1.5">
+                      <span className="text-slate-300">•</span>
+                      <LinkedMove move={m} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 rounded-xl bg-emerald-50 px-4 py-3 text-xs leading-relaxed text-emerald-800">
+            跟课方案以下方「运动课程库」为准：按上课日期录入课程后，每日打卡会自动列出当天课程，勾选即自动回填运动时长。
+          </p>
+        )}
       </div>
 
       <CourseLibrary courses={courses} onChange={onUpdateCourses} />

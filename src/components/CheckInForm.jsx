@@ -27,8 +27,12 @@ export default function CheckInForm({ checkins, plan, courses = [], onSave }) {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
-  // 当日安排的课程（来自计划页课程库，按星期匹配）
-  const dayCourses = courses.filter((c) => Number(c.weekday) === new Date(`${date}T00:00:00`).getDay())
+  // 当日安排的跟课课程（来自计划页课程库，按上课日期匹配）
+  const dayCourses = courses.filter((c) => c.date === date)
+
+  // 当日平台生成方案（按星期匹配 plan.workout.days 中的「周一…周日」）
+  const planDay = plan?.workout?.days?.find((d) => d.day === `周${weekdayCN(date)}`)
+  const planType = form.planType || 'platform'
 
   // 勾选课程：自动回填运动时长（已勾课程时长之和），全勾自动标记训练完成
   const toggleCourse = (id) => {
@@ -92,35 +96,69 @@ export default function CheckInForm({ checkins, plan, courses = [], onSave }) {
         ))}
       </div>
 
-      {dayCourses.length > 0 && (
-        <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <span className="text-sm font-semibold text-slate-600">今日锻炼方案</span>
+        <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
+          {PLAN_TYPES.map(([v, l]) => (
+            <button key={v} className={`tab-btn ${planType === v ? 'tab-btn-active' : ''}`} onClick={() => set('planType', v)}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {planType === 'app' && (
+        <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm font-bold text-indigo-800">今日训练课程 · {dayCourses.length} 节</span>
+            <span className="text-sm font-bold text-indigo-800">今日跟课课程 · {dayCourses.length} 节</span>
             <span className="text-[11px] text-indigo-400">勾选自动回填运动时长，全部完成自动标记训练</span>
           </div>
-          <ul className="mt-2.5 space-y-2">
-            {dayCourses.map((c) => {
-              const checked = (form.completedCourses || []).includes(c.id)
-              return (
-                <li key={c.id} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${checked ? 'bg-emerald-50' : 'bg-white'}`}>
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded accent-emerald-600"
-                    checked={checked}
-                    onChange={() => toggleCourse(c.id)}
-                  />
-                  {c.link ? (
-                    <a href={c.link} target="_blank" rel="noreferrer" className={`text-sm font-semibold hover:underline ${checked ? 'text-emerald-700 line-through' : 'text-indigo-600'}`}>
-                      {c.name} ↗
-                    </a>
-                  ) : (
-                    <span className={`text-sm font-semibold ${checked ? 'text-emerald-700 line-through' : 'text-slate-700'}`}>{c.name}</span>
-                  )}
-                  <AppBadge app={c.app} />
-                  <span className="ml-auto text-xs text-slate-400">{c.minutes} 分钟</span>
-                </li>
-              )
-            })}
+          {dayCourses.length > 0 ? (
+            <ul className="mt-2.5 space-y-2">
+              {dayCourses.map((c) => {
+                const checked = (form.completedCourses || []).includes(c.id)
+                return (
+                  <li key={c.id} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${checked ? 'bg-emerald-50' : 'bg-white'}`}>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded accent-emerald-600"
+                      checked={checked}
+                      onChange={() => toggleCourse(c.id)}
+                    />
+                    {c.link ? (
+                      <a href={c.link} target="_blank" rel="noreferrer" className={`text-sm font-semibold hover:underline ${checked ? 'text-emerald-700 line-through' : 'text-indigo-600'}`}>
+                        {c.name} ↗
+                      </a>
+                    ) : (
+                      <span className={`text-sm font-semibold ${checked ? 'text-emerald-700 line-through' : 'text-slate-700'}`}>{c.name}</span>
+                    )}
+                    <AppBadge app={c.app} customApp={c.customApp} />
+                    <span className="ml-auto text-xs text-slate-400">{c.minutes} 分钟</span>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <p className="mt-2.5 text-xs text-indigo-400">
+              课程库中当天没有课程 — 可前往「我的计划」页按上课日期录入，或切换到平台生成方案。
+            </p>
+          )}
+        </div>
+      )}
+
+      {planType === 'platform' && planDay && (
+        <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-bold text-emerald-800">今日平台方案 · {planDay.focus}</span>
+            <span className="text-[11px] text-emerald-500">专业名词可点击查看动作介绍，完成后勾选下方「今日训练已完成」</span>
+          </div>
+          <ul className="mt-2.5 space-y-1.5 text-[13px] text-slate-600">
+            {planDay.moves.map((m) => (
+              <li key={m} className="flex gap-1.5 rounded-lg bg-white px-3 py-2">
+                <span className="text-slate-300">•</span>
+                <LinkedMove move={m} />
+              </li>
+            ))}
           </ul>
         </div>
       )}

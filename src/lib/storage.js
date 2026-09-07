@@ -15,6 +15,7 @@ export const EMPTY_CHECKIN = {
   workoutMinutes: '',
   stress: 3,
   note: '',
+  planType: 'platform', // 当日锻炼方案：platform=平台生成 / app=运动软件跟课
   completedCourses: [], // 当日已完成的课程库课程 id
 }
 
@@ -25,7 +26,7 @@ export function initialState() {
     profile: null, // { name, gender, age, heightCm, startWeight, targetWeight, activity, equipment, diet }
     plan: null,    // 由 lib/plan.js 生成
     checkins: {},  // { 'YYYY-MM-DD': {weight, calories, ..., note, completedCourses} }
-    courses: [],   // 运动课程库：[{ id, name, app: 'keep'|'boohee'|'other', minutes, weekday: 0-6, link }]
+    courses: [],   // 运动课程库：[{ id, name, app: 'keep'|'boohee'|'other', customApp, minutes, date: 'YYYY-MM-DD', link }]
     settings: {
       safeZoneLow: 0,   // 安全体重区间下限 kg
       safeZoneHigh: 0,  // 安全体重区间上限 kg
@@ -55,6 +56,19 @@ export function clearState() {
   localStorage.removeItem(KEY)
 }
 
+// 旧版课程按「星期」安排 → 迁移为该星期自今天起最近一次出现的具体日期
+function migrateCourse(c) {
+  if (c && !c.date && c.weekday != null) {
+    const d = new Date()
+    d.setDate(d.getDate() + ((Number(c.weekday) - d.getDay() + 7) % 7))
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return { ...c, date: `${y}-${m}-${day}` }
+  }
+  return c
+}
+
 function migrate(s) {
   const base = initialState()
   return {
@@ -62,7 +76,7 @@ function migrate(s) {
     ...s,
     settings: { ...base.settings, ...(s.settings || {}) },
     checkins: s.checkins || {},
-    courses: Array.isArray(s.courses) ? s.courses : [],
+    courses: Array.isArray(s.courses) ? s.courses.map(migrateCourse) : [],
   }
 }
 
