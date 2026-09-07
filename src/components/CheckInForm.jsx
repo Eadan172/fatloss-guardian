@@ -2,6 +2,12 @@ import React from 'react'
 import { todayStr, weekdayCN } from '../lib/date'
 import { EMPTY_CHECKIN } from '../lib/storage'
 import { AppBadge } from './CourseLibrary'
+import LinkedMove from './LinkedMove'
+
+const PLAN_TYPES = [
+  ['platform', '平台生成方案'],
+  ['app', '运动软件跟课'],
+]
 
 const NUM_FIELDS = [
   ['weight', '体重', 'kg', 0.1],
