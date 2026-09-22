@@ -97,6 +97,8 @@ fatloss-guardian/
 ├─ package.json
 ├─ vite.config.js / tailwind.config.js / postcss.config.js
 ├─ Dockerfile / docker-compose.yml / nginx.conf
+├─ docs/
+│  └─ 设计-数据持久化与课程库联动.md   # 自动备份 / Docker 一键启动 / 课程库联动的设计记录
 ├─ scripts/
 │  └─ verify-plan.mjs             # 计划引擎回归校验（npm run verify:plan）
 └─ src/
