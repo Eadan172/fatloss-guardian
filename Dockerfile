@@ -1,5 +1,8 @@
 # ---- 构建阶段 ----
 FROM node:22-alpine AS build
+# 强制 DNS 先返回 IPv4：部分环境下容器内 IPv6 不可达，而 Node 会优先尝试 AAAA 记录，
+# 导致 npm 访问 registry.npmjs.org 时长时间挂起（表现为 "Exit handler never called!"）。
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --no-audit --no-fund

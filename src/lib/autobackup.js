@@ -1,5 +1,5 @@
 // 本机文件级自动备份：dev/preview 下经 vite 中间件读写项目根目录 data/backup.json；
-// docker 下同端点由 nginx 只读提供（POST 静默失败）。数据不出本机，零外部网络。
+// docker 下同端点由 nginx WebDAV 提供，同样支持读写。数据不出本机，零外部网络。
 import { validateImport } from './storage'
 
 let timer = null

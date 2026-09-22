@@ -1,7 +1,7 @@
 import React from 'react'
 import { todayStr, weekdayCN } from '../lib/date'
 import { EMPTY_CHECKIN } from '../lib/storage'
-import { AppBadge } from './CourseLibrary'
+import { AppBadge, courseDateLabel } from './CourseLibrary'
 import LinkedMove from './LinkedMove'
 
 const PLAN_TYPES = [
@@ -35,6 +35,12 @@ export default function CheckInForm({ checkins, plan, courses = [], onSave }) {
 
   // 当日安排的跟课课程（来自计划页课程库，按上课日期匹配）
   const dayCourses = courses.filter((c) => c.date === date)
+
+  // 当天没课时，列出课程库里最近的安排，便于确认课程是否录入到了正确日期
+  const upcomingCourses = [...courses]
+    .filter((c) => c.date >= date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.id - b.id)
+    .slice(0, 3)
 
   // 当日平台生成方案（按星期匹配 plan.workout.days 中的「周一…周日」）
   const planDay = plan?.workout?.days?.find((d) => d.day === `周${weekdayCN(date)}`)
@@ -145,9 +151,26 @@ export default function CheckInForm({ checkins, plan, courses = [], onSave }) {
               })}
             </ul>
           ) : (
-            <p className="mt-2.5 text-xs text-indigo-400">
-              课程库中当天没有课程 — 可前往「我的计划」页按上课日期录入，或切换到平台生成方案。
-            </p>
+            <div className="mt-2.5">
+              <p className="text-xs text-indigo-400">
+                课程库中 {date} 这天没有课程 —— 可前往「我的计划」页按上课日期录入，或切换到平台生成方案。
+              </p>
+              {upcomingCourses.length > 0 && (
+                <>
+                  <div className="mt-2 text-[11px] font-semibold text-indigo-400">课程库共 {courses.length} 节，最近的安排：</div>
+                  <ul className="mt-1.5 space-y-1.5">
+                    {upcomingCourses.map((c) => (
+                      <li key={c.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/70 px-3 py-1.5">
+                        <span className="chip bg-slate-100 text-slate-500">{courseDateLabel(c.date)}</span>
+                        <span className="text-xs font-semibold text-slate-600">{c.name}</span>
+                        <AppBadge app={c.app} customApp={c.customApp} />
+                        <span className="ml-auto text-[11px] text-slate-400">{c.minutes} 分钟</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -167,6 +190,12 @@ export default function CheckInForm({ checkins, plan, courses = [], onSave }) {
             ))}
           </ul>
         </div>
+      )}
+
+      {planType === 'platform' && !planDay && (
+        <p className="mt-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-3 text-xs text-emerald-700">
+          今天的平台方案没有找到 —— 请到「我的计划」页确认计划已生成（可点「重新生成计划」）。
+        </p>
       )}
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
